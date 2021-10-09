@@ -21,7 +21,7 @@ $(document).ready(function(){
 
     var categories = [];
 
-    $.get(_url, function(data){
+    function renderPage(data){
 
         $.each(data, function(key, items){
 
@@ -41,12 +41,36 @@ $(document).ready(function(){
 
         $('#products').html(dataResult);
         $('#cat_select').html(`<option value="all">All</option>` + catResult);
+   
+    }
 
-    });
+    var networkDataReceived = false
+
+    // Fresh Data From Online
+    var networkUpdate = fetch(_url).then(function(response){
+        return response.json()
+    }).then(function(data){
+        networkDataReceived = true
+        renderPage(data)
+    })
+
+    // Data From Cache
+    caches.match(_url).then(function(response){
+        if(!response) throw Error('No data on Cache')
+        return response.json()
+    }).then(function(data){
+        if(!networkDataReceived){
+            renderPage(data)
+            console.log('Render data from Cache')
+        }
+    }).catch(function(){
+        return networkUpdate
+    })
 
     $('#cat_select').on('change', function(){
         updateProduct($(this).val());
     });
+        
     
     function updateProduct(cat){
     
